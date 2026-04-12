@@ -441,13 +441,13 @@ a{color:inherit;text-decoration:none;}
 
   <div class="arow">
     <button class="btn-fee" onclick="openFee()">💴 料金表</button>
+    <button class="btn-fee" id="btnAll" onclick="toggleAll()">📅 予約全体を見る</button>
     <a class="btn-apply" id="btnApply"
        href="https://docs.google.com/forms/d/e/1FAIpQLSd4mtYGpTgUAuyGPFdcOVwGsOFFv3_8QFq2E_K1EHUMbbyjZg/viewform"
        target="_blank" rel="noopener">
-      📝 予約を申し込む
+      📝 申し込む
     </a>
   </div>
-
   <div class="info-strip">
     <strong>予約申込はGoogleフォームから受け付けています。</strong><br>
     申込が重なった場合は、原則として早い申込順を優先します。<br>
@@ -546,10 +546,11 @@ const S = {
   tab: 'living',
   yr: now.getFullYear(),
   mo: now.getMonth(),
-  fd: null,       // filter date
+  fd: null,
   isAdm: false,
-  data: [],       // parsed CSV rows
-  lastFetch: null
+  data: [],
+  lastFetch: null,
+  showAll: false
 };
 const DAYS = ['日','月','火','水','木','金','土'];
 const todayS = fmtDate(now);
@@ -776,6 +777,17 @@ function clrFilter() {
   renderCal(); renderList();
 }
 
+function toggleAll() {
+  S.showAll = !S.showAll;
+  S.fd = null;
+  document.getElementById('fbw').style.display = 'none';
+  const btn = document.getElementById('btnAll');
+  btn.textContent = S.showAll ? '📅 閉じる' : '📅 予約全体を見る';
+  btn.style.color = S.showAll ? 'var(--moss)' : '';
+  btn.style.borderColor = S.showAll ? 'var(--moss)' : '';
+  renderCal(); renderList();
+}
+
 /* ═══════════════════════════════════════════
    LIST
 ═══════════════════════════════════════════ */
@@ -786,31 +798,16 @@ const PLAN_LABEL = {
 };
 
 function renderList() {
-  let rows = S.data.filter(r => {
-    if (r.space !== S.tab) return false;
-    if (S.fd && r.date !== S.fd) return false;
-    return true;
-  });
-
-  if (!S.isAdm && !S.fd) {
-    rows = rows.filter(r => r.date >= todayS);
-  }
-
-  rows.sort((a,b) => a.date.localeCompare(b.date) || a.start.localeCompare(b.start));
-
   const el = document.getElementById('resList');
 
-  if (!rows.length) {
-    el.innerHTML = `<div class="empty-st">
-      <div class="ico">${S.tab==='living'?'🌿':'📋'}</div>
-      <p>${S.fd ? 'この日の予約はありません' : S.data.length === 0 ? 'データを読み込んでいます…' : '現在の確定予約はありません'}<br>
-      <small style="font-size:.72rem;color:var(--ink-l)">Googleフォームから予約をお申し込みいただけます</small></p>
-    </div>`;
-    return;
-  }
-
-  // ── 日付フィルター中：詳細カード表示 ──
+  // ── 日付フィルター中：詳細カード ──
   if (S.fd) {
+    let rows = S.data.filter(r => r.space === S.tab && r.date === S.fd);
+    rows.sort((a,b) => a.start.localeCompare(b.start));
+    if (!rows.length) {
+      el.innerHTML = `<div class="empty-st"><div class="ico">📭</div><p>この日の予約はありません</p></div>`;
+      return;
+    }
     const [,mo,d] = S.fd.split('-');
     const dow = DAYS[new Date(S.fd+'T00:00:00').getDay()];
     let h = `<div class="dg"><div class="dg-hdr">${parseInt(mo)}月${parseInt(d)}日（${dow}）の予約</div>`;
@@ -834,7 +831,26 @@ function renderList() {
     return;
   }
 
+  // ── 月全体リスト非表示 ──
+  if (!S.showAll) {
+    el.innerHTML = '';
+    return;
+  }
+
   // ── 月全体：アコーディオンリスト ──
+  let rows = S.data.filter(r => r.space === S.tab);
+  if (!S.isAdm) rows = rows.filter(r => r.date >= todayS);
+  rows.sort((a,b) => a.date.localeCompare(b.date) || a.start.localeCompare(b.start));
+
+  if (!rows.length) {
+    el.innerHTML = `<div class="empty-st">
+      <div class="ico">${S.tab==='living'?'🌿':'📋'}</div>
+      <p>${S.data.length === 0 ? 'データを読み込んでいます…' : '現在の予約はありません'}<br>
+      <small style="font-size:.72rem;color:var(--ink-l)">Googleフォームから予約をお申し込みいただけます</small></p>
+    </div>`;
+    return;
+  }
+
   let openIdx = -1;
   function buildList() {
     let h = '<div class="rl">';
@@ -849,7 +865,7 @@ function renderList() {
       const isOpen = r.open && (r.open.includes('参加可能') || r.open.includes('見学可能'));
       const isExp = openIdx === i;
       h += `<div class="ri" onclick="toggleItem(${i})">
-        <div class="ri-row" style="display:flex;align-items:center;gap:8px;padding:9px 10px 9px 0;transition:background .1s;">
+        <div class="ri-row" style="display:flex;align-items:center;gap:8px;padding:9px 10px 9px 0;">
           <div class="ri-bar ${r.space==='living'?'l':'m'}"></div>
           <div class="ri-date${isToday?' is-today':''}">${dateLabel}</div>
           <div class="ri-body">
@@ -873,10 +889,7 @@ function renderList() {
     });
     h += '</div>';
     el.innerHTML = h;
-    window.toggleItem = function(i) {
-      openIdx = openIdx === i ? -1 : i;
-      buildList();
-    };
+    window.toggleItem = function(i) { openIdx = openIdx===i ? -1 : i; buildList(); };
   }
   buildList();
 }
