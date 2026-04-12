@@ -448,9 +448,9 @@ a{color:inherit;text-decoration:none;}
       📝 予約を申し込む
     </a>
   </div>
-  <div style="margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;">
-    <div style="font-size:.68rem;color:var(--ink-l);">今後の予約一覧</div>
-    <button id="btnToggleList" onclick="toggleResList()" style="font-size:.68rem;color:var(--ink-l);background:none;border:none;cursor:pointer;padding:2px 4px;">折りたたむ ∧</button>
+  <div style="margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;background:var(--white);border:1px solid var(--cream-d);border-radius:var(--r2);padding:8px 12px;box-shadow:var(--sh);">
+    <div style="font-size:.78rem;font-weight:500;color:var(--ink-m);">📅 今後の予約一覧</div>
+    <button id="btnToggleList" onclick="toggleResList()" style="font-size:.72rem;font-weight:500;color:var(--moss);background:var(--moss-l);border:1px solid var(--moss-m);border-radius:10px;cursor:pointer;padding:3px 10px;">折りたたむ ∧</button>
   </div>
   <div class="info-strip">
     <strong>予約申込はGoogleフォームから受け付けています。</strong><br>
@@ -869,7 +869,7 @@ function renderList() {
     return;
   }
 
-  let openIdx = -1;
+  let openIdx = 'all';
   function buildList() {
     let h = '<div class="rl">';
     rows.forEach((r, i) => {
@@ -881,7 +881,7 @@ function renderList() {
       const isNoTitle = !r.title;
       const planLabel = PLAN_LABEL[r.plan] || r.plan || '';
       const isOpen = r.open && (r.open.includes('参加可能') || r.open.includes('見学可能'));
-      const isExp = openIdx === i;
+      const isExp = openIdx === 'all' || openIdx === i;
       h += `<div class="ri" onclick="toggleItem(${i})">
         <div class="ri-row" style="display:flex;align-items:center;gap:8px;padding:9px 10px 9px 0;">
           <div class="ri-bar ${r.space==='living'?'l':'m'}"></div>
@@ -907,7 +907,14 @@ function renderList() {
     });
     h += '</div>';
     el.innerHTML = h;
-    window.toggleItem = function(i) { openIdx = openIdx===i ? -1 : i; buildList(); };
+    window.toggleItem = function(i) {
+      if (openIdx === 'all') {
+        openIdx = -1;
+      } else {
+        openIdx = openIdx === i ? -1 : i;
+      }
+      buildList();
+    };
   }
   buildList();
 }
