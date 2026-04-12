@@ -213,7 +213,16 @@ a{color:inherit;text-decoration:none;}
 }
 .ri-title.e{font-family:'Noto Sans JP',sans-serif;font-size:.73rem;color:var(--ink-l);font-style:italic;}
 .ri-time{font-size:.66rem;color:var(--ink-l);margin-top:1px;}
-.ri-arr{font-size:.8rem;color:var(--ink-l);flex-shrink:0;padding-right:2px;}
+.ri-arr{font-size:.8rem;color:var(--ink-l);flex-shrink:0;padding-right:4px;transition:transform .2s;}
+.ri-arr.open{transform:rotate(90deg);}
+.ri-detail{overflow:hidden;max-height:0;transition:max-height .25s ease;}
+.ri-detail.open{max-height:300px;}
+.ri-detail-inner{
+  padding:9px 12px 11px 15px;
+  border-top:1px solid var(--cream-d);
+  background:var(--cream);
+}
+.ri-det-row{font-size:.68rem;color:var(--ink-m);margin-bottom:3px;display:flex;align-items:center;gap:4px;}
 
 /* 詳細カード（日付フィルター後） */
 .dg{margin-bottom:15px;}
@@ -825,27 +834,51 @@ function renderList() {
     return;
   }
 
-  // ── 月全体：コンパクトリスト表示 ──
-  let h = '<div class="rl">';
-  rows.forEach(r => {
-    const [,mo,d] = r.date.split('-');
-    const dow = DAYS[new Date(r.date+'T00:00:00').getDay()];
-    const isToday = r.date === todayS;
-    const dateLabel = `${parseInt(mo)}/${parseInt(d)}（${dow}）`;
-    const title = r.title || '個人利用';
-    const isNoTitle = !r.title;
-    h += `<div class="ri" onclick="filterDate('${r.date}')">
-      <div class="ri-bar ${r.space==='living'?'l':'m'}"></div>
-      <div class="ri-date${isToday?' is-today':''}">${dateLabel}</div>
-      <div class="ri-body">
-        <div class="ri-title${isNoTitle?' e':''}">${esc(title)}</div>
-        <div class="ri-time">${esc(r.start)} 〜 ${esc(r.end)}</div>
-      </div>
-      <div class="ri-arr">›</div>
-    </div>`;
-  });
-  h += '</div>';
-  el.innerHTML = h;
+  // ── 月全体：アコーディオンリスト ──
+  let openIdx = -1;
+  function buildList() {
+    let h = '<div class="rl">';
+    rows.forEach((r, i) => {
+      const [,mo,d] = r.date.split('-');
+      const dow = DAYS[new Date(r.date+'T00:00:00').getDay()];
+      const isToday = r.date === todayS;
+      const dateLabel = `${parseInt(mo)}/${parseInt(d)}（${dow}）`;
+      const title = r.title || '個人利用';
+      const isNoTitle = !r.title;
+      const planLabel = PLAN_LABEL[r.plan] || r.plan || '';
+      const isOpen = r.open && (r.open.includes('参加可能') || r.open.includes('見学可能'));
+      const isExp = openIdx === i;
+      h += `<div class="ri" onclick="toggleItem(${i})">
+        <div class="ri-row" style="display:flex;align-items:center;gap:8px;padding:9px 10px 9px 0;transition:background .1s;">
+          <div class="ri-bar ${r.space==='living'?'l':'m'}"></div>
+          <div class="ri-date${isToday?' is-today':''}">${dateLabel}</div>
+          <div class="ri-body">
+            <div class="ri-title${isNoTitle?' e':''}">${esc(title)}</div>
+            <div class="ri-time">${esc(r.start)} 〜 ${esc(r.end)}</div>
+          </div>
+          <div class="ri-arr${isExp?' open':''}">›</div>
+        </div>
+        <div class="ri-detail${isExp?' open':''}">
+          <div class="ri-detail-inner">
+            <div class="rbadges" style="margin-bottom:6px;">
+              <span class="b ${r.space==='living'?'sl':'sm'}">${r.space==='living'?'食堂':'会議室'}</span>
+              ${planLabel ? `<span class="b tp">${esc(planLabel)}</span>` : ''}
+              ${isOpen ? '<span class="b op">🎉 参加OK</span>' : ''}
+            </div>
+            ${r.pax ? `<div class="ri-det-row">👥 ${esc(r.pax)}人（目安）</div>` : ''}
+            ${r.appliedAt ? `<div class="ri-det-row">📋 申込 ${esc(r.appliedAt)}</div>` : ''}
+          </div>
+        </div>
+      </div>`;
+    });
+    h += '</div>';
+    el.innerHTML = h;
+    window.toggleItem = function(i) {
+      openIdx = openIdx === i ? -1 : i;
+      buildList();
+    };
+  }
+  buildList();
 }
 
 /* ═══════════════════════════════════════════
