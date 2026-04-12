@@ -549,8 +549,8 @@ const COL_MAP = {
   '利用目的・タイトル': 'title',
   '想定利用人数（定員16名）': 'pax',
   '他の方の参加・見学': 'open',
-  'ステータス': 'status',
-  'スペース': 'space'
+  'スペース': 'space',
+  '申込日時': 'appliedAt'
 };
 
 function parseCSV(text) {
@@ -700,8 +700,7 @@ function renderCal() {
   const dm = {};
   S.data.forEach(r => {
     if (!r.date) return;
-    // キャンセルは点を出さない
-    if (r.status && r.status.includes('キャンセル')) return;
+
     if (!dm[r.date]) dm[r.date] = {};
     if (r.space === 'living') dm[r.date].living = 1;
     if (r.space === 'meeting') dm[r.date].meeting = 1;
@@ -750,17 +749,11 @@ const PLAN_LABEL = {
   'イベント利用': 'イベント',
   '会議室利用': '会議室'
 };
-const STATUS_CLASS = {
-  '確定': 'st-ok',
-  '仮受付': 'st-tmp'
-};
 
 function renderList() {
   let rows = S.data.filter(r => {
     if (r.space !== S.tab) return false;
     if (S.fd && r.date !== S.fd) return false;
-    // キャンセルは管理者のみ表示
-    if (!S.isAdm && r.status && r.status.includes('キャンセル')) return false;
     return true;
   });
 
@@ -796,20 +789,19 @@ function renderList() {
       ${parseInt(mo)}月${parseInt(d)}日（${dow}）${isPast ? ' ・ 終了' : ''}
     </div>`;
     grps[dt].forEach(r => {
-      const isCancelled = r.status && r.status.includes('キャンセル');
+      const isCancelled = false;
       const planLabel = PLAN_LABEL[r.plan] || r.plan || '';
-      const stClass = STATUS_CLASS[r.status] || 'tp';
       const isOpen = r.open && (r.open.includes('参加可能') || r.open.includes('見学可能'));
-      h += `<div class="rc ${r.space==='living'?'l':'m'}${isCancelled?' cancelled':''}">
+      h += `<div class="rc ${r.space==='living'?'l':'m'}">
         <div class="rt${r.title?'':' e'}">${r.title ? esc(r.title) : '（個人利用）'}</div>
         <div class="rtime">⏱ ${esc(r.start)} 〜 ${esc(r.end)}</div>
         <div class="rbadges">
           <span class="b ${r.space==='living'?'sl':'sm'}">${r.space==='living'?'食堂':'会議室'}</span>
           ${planLabel ? `<span class="b tp">${esc(planLabel)}</span>` : ''}
-          ${r.status ? `<span class="b ${stClass}">${esc(r.status)}</span>` : ''}
           ${isOpen ? '<span class="b op">🎉 参加OK</span>' : ''}
         </div>
         ${r.pax ? `<div class="rpax">👥 ${esc(r.pax)}人（目安）</div>` : ''}
+        ${r.appliedAt ? `<div style="font-size:.62rem;color:var(--ink-l);margin-top:4px;">📋 申込 ${esc(r.appliedAt)}</div>` : ''}
       </div>`;
     });
     h += '</div>';
