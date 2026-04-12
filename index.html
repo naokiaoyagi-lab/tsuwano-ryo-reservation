@@ -46,7 +46,7 @@ a{color:inherit;text-decoration:none;}
   max-width:680px;margin:0 auto;
 }
 .hdr-logo{
-  font-family:'Noto Serif JP',serif;font-size:.92rem;font-weight:500;
+  font-family:'Noto Sans JP',sans-serif;font-size:.92rem;font-weight:500;
   color:var(--ink);letter-spacing:.03em;white-space:nowrap;flex-shrink:0;
   line-height:1.3;
 }
@@ -105,7 +105,7 @@ a{color:inherit;text-decoration:none;}
   margin-bottom:10px;box-shadow:var(--sh);
 }
 .cal-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
-.cal-month{font-family:'Noto Serif JP',serif;font-size:.9rem;font-weight:500;letter-spacing:.05em;}
+.cal-month{font-family:'Noto Sans JP',sans-serif;font-size:.9rem;font-weight:500;letter-spacing:.05em;}
 .btn-nav{
   width:28px;height:28px;border-radius:50%;
   background:var(--cream-d);color:var(--ink-m);font-size:.9rem;
@@ -206,7 +206,7 @@ a{color:inherit;text-decoration:none;}
 .ri-date.is-today{color:var(--terra);}
 .ri-body{flex:1;min-width:0;}
 .ri-title{
-  font-family:'Noto Serif JP',serif;
+  font-family:'Noto Sans JP',sans-serif;
   font-size:.82rem;font-weight:500;color:var(--ink);
   overflow:hidden;white-space:nowrap;text-overflow:ellipsis;
   line-height:1.35;
@@ -238,7 +238,7 @@ a{color:inherit;text-decoration:none;}
 .rc::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;}
 .rc.l::before{background:var(--moss);}
 .rc.m::before{background:var(--plum);}
-.rt{font-family:'Noto Serif JP',serif;font-size:.92rem;font-weight:500;color:var(--ink);margin-bottom:3px;line-height:1.4;}
+.rt{font-family:'Noto Sans JP',sans-serif;font-size:.92rem;font-weight:500;color:var(--ink);margin-bottom:3px;line-height:1.4;}
 .rt.e{font-family:'Noto Sans JP',sans-serif;font-size:.77rem;color:var(--ink-l);font-style:italic;}
 .rtime{font-size:.76rem;color:var(--ink-m);font-weight:500;margin-bottom:5px;display:flex;align-items:center;gap:3px;}
 .rbadges{display:flex;flex-wrap:wrap;gap:3px;margin-bottom:4px;}
@@ -294,7 +294,7 @@ a{color:inherit;text-decoration:none;}
   display:flex;align-items:center;justify-content:space-between;
   position:sticky;top:0;background:var(--white);z-index:10;
 }
-.mtitle{font-family:'Noto Serif JP',serif;font-size:.9rem;font-weight:500;color:var(--ink);}
+.mtitle{font-family:'Noto Sans JP',sans-serif;font-size:.9rem;font-weight:500;color:var(--ink);}
 .btn-x{
   width:26px;height:26px;border-radius:50%;
   background:var(--cream-d);color:var(--ink-m);font-size:.95rem;
@@ -304,7 +304,7 @@ a{color:inherit;text-decoration:none;}
 /* ── Fee table ── */
 .mb{padding:11px 13px 0;}
 .fst{
-  font-family:'Noto Serif JP',serif;font-size:.85rem;font-weight:500;
+  font-family:'Noto Sans JP',sans-serif;font-size:.85rem;font-weight:500;
   color:var(--ink);margin:13px 0 5px;
   padding-bottom:5px;border-bottom:1px solid var(--cream-d);
   display:flex;align-items:center;gap:5px;
@@ -325,7 +325,7 @@ a{color:inherit;text-decoration:none;}
 /* ── Login ── */
 .lbody{padding:20px 14px;display:flex;flex-direction:column;gap:11px;}
 .lico{text-align:center;font-size:2rem;margin-bottom:2px;}
-.lt{font-family:'Noto Serif JP',serif;font-size:.9rem;text-align:center;font-weight:500;color:var(--ink);}
+.lt{font-family:'Noto Sans JP',sans-serif;font-size:.9rem;text-align:center;font-weight:500;color:var(--ink);}
 .lerr{background:var(--terra-l);color:var(--terra);border-radius:var(--r3);padding:7px 9px;font-size:.73rem;display:none;}
 .lerr.show{display:block;}
 .fi{
@@ -441,12 +441,16 @@ a{color:inherit;text-decoration:none;}
 
   <div class="arow">
     <button class="btn-fee" onclick="openFee()">💴 料金表</button>
-    <button class="btn-fee" id="btnAll" onclick="toggleAll()">📅 予約全体を見る</button>
+    <button class="btn-fee" onclick="openNote()">⚠️ 注意事項</button>
     <a class="btn-apply" id="btnApply"
        href="https://docs.google.com/forms/d/e/1FAIpQLSd4mtYGpTgUAuyGPFdcOVwGsOFFv3_8QFq2E_K1EHUMbbyjZg/viewform"
        target="_blank" rel="noopener">
-      📝 申し込む
+      📝 予約を申し込む
     </a>
+  </div>
+  <div style="margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;">
+    <div style="font-size:.68rem;color:var(--ink-l);">今後の予約一覧</div>
+    <button id="btnToggleList" onclick="toggleResList()" style="font-size:.68rem;color:var(--ink-l);background:none;border:none;cursor:pointer;padding:2px 4px;">折りたたむ ∧</button>
   </div>
   <div class="info-strip">
     <strong>予約申込はGoogleフォームから受け付けています。</strong><br>
@@ -505,7 +509,39 @@ a{color:inherit;text-decoration:none;}
   </div>
 </div>
 
-<!-- Modal: ログイン -->
+<!-- Modal: 注意事項 -->
+<div class="ov" id="ovNote" onclick="closeNoteOut(event)">
+  <div class="modal">
+    <div class="mhdl"></div>
+    <div class="mhdr">
+      <div class="mtitle">ご注意・お願い</div>
+      <button class="btn-x" onclick="closeNote()">×</button>
+    </div>
+    <div class="mb">
+      <ul style="list-style:none;padding:0;margin:0;">
+        <li style="padding:11px 0;border-bottom:1px solid var(--cream-d);font-size:.82rem;color:var(--ink);line-height:1.6;display:flex;gap:8px;">
+          <span style="color:var(--gold);flex-shrink:0;">•</span>町民・学生の方は身分証・学生証をご提示ください
+        </li>
+        <li style="padding:11px 0;border-bottom:1px solid var(--cream-d);font-size:.82rem;color:var(--ink);line-height:1.6;display:flex;gap:8px;">
+          <span style="color:var(--gold);flex-shrink:0;">•</span>お支払いは当日・現地にてお願いします
+        </li>
+        <li style="padding:11px 0;border-bottom:1px solid var(--cream-d);font-size:.82rem;color:var(--ink);line-height:1.6;display:flex;gap:8px;">
+          <span style="color:var(--gold);flex-shrink:0;">•</span>飲食物の持ち込みは可能です
+        </li>
+        <li style="padding:11px 0;border-bottom:1px solid var(--cream-d);font-size:.82rem;color:var(--ink);line-height:1.6;display:flex;gap:8px;">
+          <span style="color:var(--gold);flex-shrink:0;">•</span>利用エリアは食堂と1階トイレのみです
+        </li>
+        <li style="padding:11px 0;border-bottom:1px solid var(--cream-d);font-size:.82rem;color:var(--ink);line-height:1.6;display:flex;gap:8px;">
+          <span style="color:var(--gold);flex-shrink:0;">•</span>混雑時は宿泊者の利用が優先されます
+        </li>
+        <li style="padding:11px 0;font-size:.82rem;color:var(--ink);line-height:1.6;display:flex;gap:8px;">
+          <span style="color:var(--gold);flex-shrink:0;">•</span>厨房は当面の間、宿泊者専用です
+        </li>
+      </ul>
+      <div style="height:14px"></div>
+    </div>
+  </div>
+</div>
 <div class="ov" id="ovLogin" onclick="closeLoginOut(event)">
   <div class="modal">
     <div class="mhdl"></div>
@@ -549,8 +585,7 @@ const S = {
   fd: null,
   isAdm: false,
   data: [],
-  lastFetch: null,
-  showAll: false
+  lastFetch: null
 };
 const DAYS = ['日','月','火','水','木','金','土'];
 const todayS = fmtDate(now);
@@ -777,17 +812,6 @@ function clrFilter() {
   renderCal(); renderList();
 }
 
-function toggleAll() {
-  S.showAll = !S.showAll;
-  S.fd = null;
-  document.getElementById('fbw').style.display = 'none';
-  const btn = document.getElementById('btnAll');
-  btn.textContent = S.showAll ? '📅 閉じる' : '📅 予約全体を見る';
-  btn.style.color = S.showAll ? 'var(--moss)' : '';
-  btn.style.borderColor = S.showAll ? 'var(--moss)' : '';
-  renderCal(); renderList();
-}
-
 /* ═══════════════════════════════════════════
    LIST
 ═══════════════════════════════════════════ */
@@ -831,13 +855,7 @@ function renderList() {
     return;
   }
 
-  // ── 月全体リスト非表示 ──
-  if (!S.showAll) {
-    el.innerHTML = '';
-    return;
-  }
-
-  // ── 月全体：アコーディオンリスト ──
+  // ── 月全体：アコーディオンリスト（デフォルト） ──
   let rows = S.data.filter(r => r.space === S.tab);
   if (!S.isAdm) rows = rows.filter(r => r.date >= todayS);
   rows.sort((a,b) => a.date.localeCompare(b.date) || a.start.localeCompare(b.start));
@@ -948,6 +966,19 @@ function updAdm() {
 function openFee()  { document.getElementById('ovFee').classList.add('open'); }
 function closeFee() { document.getElementById('ovFee').classList.remove('open'); }
 function closeFeeOut(e) { if(e.target===document.getElementById('ovFee')) closeFee(); }
+
+function openNote()  { document.getElementById('ovNote').classList.add('open'); }
+function closeNote() { document.getElementById('ovNote').classList.remove('open'); }
+function closeNoteOut(e) { if(e.target===document.getElementById('ovNote')) closeNote(); }
+
+let _listOpen = true;
+function toggleResList() {
+  _listOpen = !_listOpen;
+  const el = document.getElementById('resList');
+  const btn = document.getElementById('btnToggleList');
+  el.style.display = _listOpen ? '' : 'none';
+  btn.textContent = _listOpen ? '折りたたむ ∧' : '展開する ∨';
+}
 
 /* ═══════════════════════════════════════════
    INIT
