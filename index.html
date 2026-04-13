@@ -435,8 +435,11 @@ a{color:inherit;text-decoration:none;}
   </div>
 
   <div class="adm-bar" id="admBar" style="display:none">
-    <span class="adm-bar-label">🔐 管理者モード — データはGoogle Sheetsから取得</span>
-    <button class="btn-ref" onclick="fetchCSV(true)">🔄 今すぐ更新</button>
+    <span class="adm-bar-label">🔐 管理者モード</span>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;">
+      <button class="btn-ref" onclick="fetchCSV(true)">🔄 更新</button>
+      <button class="btn-ref" onclick="downloadCSV()">📥 CSV</button>
+    </div>
   </div>
 
   <div class="arow">
@@ -458,7 +461,7 @@ a{color:inherit;text-decoration:none;}
   <div class="info-strip">
     <strong>予約申込はGoogleフォームから受け付けています。</strong><br>
     申込が重なった場合は、原則として早い申込順を優先します。<br>
-    変更・キャンセルはInstagram / お電話にてご連絡ください。<br>
+    変更・キャンセルはお電話 / Instagram にてご連絡ください。<br>
     つわの寮について詳しくは <a href="https://tsuwano-ryo.com/" target="_blank" rel="noopener" style="color:var(--moss);text-decoration:underline;text-underline-offset:2px;">tsuwano-ryo.com</a> をご覧ください。
   </div>
 </div>
@@ -466,10 +469,14 @@ a{color:inherit;text-decoration:none;}
 <!-- Footer -->
 <div class="footer">
   <div class="foot-in">
-    <div class="flabel">予約の変更・キャンセルはこちら</div>
+    <div class="flabel">ご連絡・アクセスはこちら</div>
     <div class="flinks">
-      <a class="flink" href="https://www.instagram.com/tsuwano_ryo_guesthouse/" target="_blank" rel="noopener">📷 @tsuwano_ryo_guesthouse</a>
       <a class="flink" href="tel:050-6861-9165">📞 050-6861-9165</a>
+      <a class="flink" href="https://www.instagram.com/tsuwano_ryo_guesthouse/" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:3px;">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>
+        @tsuwano_ryo_guesthouse
+      </a>
+      <a class="flink" href="#" onclick="openMap();return false;">📍 アクセス・地図</a>
     </div>
   </div>
 </div>
@@ -543,6 +550,28 @@ a{color:inherit;text-decoration:none;}
     </div>
   </div>
 </div>
+
+<!-- Modal: アクセス・地図 -->
+<div class="ov" id="ovMap" onclick="closeMapOut(event)">
+  <div class="modal">
+    <div class="mhdl"></div>
+    <div class="mhdr">
+      <div class="mtitle">アクセス・地図</div>
+      <button class="btn-x" onclick="closeMap()">×</button>
+    </div>
+    <div class="mb">
+      <div style="font-size:.78rem;color:var(--ink-m);margin-bottom:8px;line-height:1.7;">
+        〒699-5613　島根県津和野町鷲原口297番地<br>
+        <a href="tel:050-6861-9165" style="color:var(--moss);">📞 050-6861-9165</a>
+      </div>
+      <div style="border-radius:var(--r2);overflow:hidden;">
+        <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d6579.9969661371315!2d131.7654267419614!3d34.45218639101837!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x355b2d00277ee157%3A0x26034472e1c9b41e!2z44Gk44KP44Gu5a-uIOOCouOCueODiOODj-OCpuOCue-8huOCs-ODn-ODpeODi-ODhuOCo-OCueODmuODvOOCuQ!5e0!3m2!1sja!2sjp!4v1776045338087!5m2!1sja!2sjp" width="100%" height="260" style="border:0;display:block;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+      </div>
+      <div style="height:14px"></div>
+    </div>
+  </div>
+</div>
+
 <div class="ov" id="ovLogin" onclick="closeLoginOut(event)">
   <div class="modal">
     <div class="mhdl"></div>
@@ -870,21 +899,32 @@ function renderList() {
     return;
   }
 
+  const tomorrowS = fmtDate(new Date(Date.now() + 86400000));
+
   let h = '<div class="rl">';
   rows.forEach(r => {
     const [,mo,d] = r.date.split('-');
     const dow = DAYS[new Date(r.date+'T00:00:00').getDay()];
     const isToday = r.date === todayS;
+    const isTomorrow = r.date === tomorrowS;
     const dateLabel = `${parseInt(mo)}/${parseInt(d)}（${dow}）`;
     const title = r.title || '個人利用';
     const isNoTitle = !r.title;
     const planLabel = PLAN_LABEL[r.plan] || r.plan || '';
     const isOpen = r.open && (r.open.includes('参加可能') || r.open.includes('見学可能'));
-    h += `<div style="display:flex;align-items:stretch;border-bottom:1px solid var(--cream-d);">
+
+    // 今日ハイライトのみ
+    const hlBg = isToday ? 'background:var(--terra-l);' : '';
+    const hlTag = isToday
+      ? `<span style="font-size:.58rem;font-weight:500;background:var(--terra);color:#fff;border-radius:4px;padding:1px 5px;margin-left:5px;">今日</span>`
+      : '';
+    const dateColor = isToday ? 'var(--terra)' : 'var(--ink-m)';
+
+    h += `<div style="display:flex;align-items:stretch;border-bottom:1px solid var(--cream-d);${hlBg}">
       <div style="width:3px;flex-shrink:0;background:${r.space==='living'?'var(--moss)':'var(--plum)'};"></div>
       <div style="flex:1;padding:10px 12px;">
-        <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:5px;">
-          <div style="font-size:.71rem;font-weight:500;color:${isToday?'var(--terra)':'var(--ink-m)'};white-space:nowrap;">${dateLabel}</div>
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px;flex-wrap:wrap;">
+          <div style="font-size:.71rem;font-weight:500;color:${dateColor};white-space:nowrap;">${dateLabel}${hlTag}</div>
           <div style="font-size:.84rem;font-weight:500;color:var(--ink);${isNoTitle?'font-style:italic;color:var(--ink-l)':''};">${esc(title)}</div>
         </div>
         <div style="font-size:.71rem;color:var(--ink-m);margin-bottom:6px;">⏱ ${esc(r.start)} 〜 ${esc(r.end)}</div>
@@ -961,6 +1001,10 @@ function openNote()  { document.getElementById('ovNote').classList.add('open'); 
 function closeNote() { document.getElementById('ovNote').classList.remove('open'); }
 function closeNoteOut(e) { if(e.target===document.getElementById('ovNote')) closeNote(); }
 
+function openMap()  { document.getElementById('ovMap').classList.add('open'); }
+function closeMap() { document.getElementById('ovMap').classList.remove('open'); }
+function closeMapOut(e) { if(e.target===document.getElementById('ovMap')) closeMap(); }
+
 let _listOpen = true;
 function toggleResList() {
   _listOpen = !_listOpen;
@@ -968,6 +1012,26 @@ function toggleResList() {
   const btn = document.getElementById('btnToggleList');
   el.style.display = _listOpen ? '' : 'none';
   btn.textContent = _listOpen ? '折りたたむ ∧' : '展開する ∨';
+}
+
+function downloadCSV() {
+  if (!S.isAdm) { toast('管理者のみ利用できます'); return; }
+  if (!S.data.length) { toast('ダウンロードするデータがありません'); return; }
+  const all = [...S.data].sort((a,b) => a.date.localeCompare(b.date) || a.start.localeCompare(b.start));
+  const SL = {living:'食堂（リビング）', meeting:'会議室'};
+  const cols = ['利用日','スペース','開始','終了','利用プラン','タイトル','人数','参加・見学','申込日時'];
+  const rows = all.map(r => [
+    r.date, SL[r.space]||r.space, r.start, r.end,
+    r.plan||'', r.title||'', r.pax||'', r.open||'', r.appliedAt||''
+  ].map(v => '"' + String(v).replace(/"/g,'""') + '"').join(','));
+  const bom = '\uFEFF';
+  const csv = bom + [cols.join(','), ...rows].join('\r\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'}));
+  const d = new Date();
+  a.download = `つわの寮_予約一覧_${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}.csv`;
+  a.click();
+  toast('CSVをダウンロードしました ✓');
 }
 
 /* ═══════════════════════════════════════════
