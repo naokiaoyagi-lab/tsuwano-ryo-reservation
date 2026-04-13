@@ -452,14 +452,15 @@ a{color:inherit;text-decoration:none;}
     <div style="font-size:.78rem;font-weight:500;color:var(--ink-m);">📅 今後の予約一覧</div>
     <button id="btnToggleList" onclick="toggleResList()" style="font-size:.72rem;font-weight:500;color:var(--moss);background:var(--moss-l);border:1px solid var(--moss-m);border-radius:10px;cursor:pointer;padding:3px 10px;">折りたたむ ∧</button>
   </div>
+
+  <div id="resList"></div>
+
   <div class="info-strip">
     <strong>予約申込はGoogleフォームから受け付けています。</strong><br>
     申込が重なった場合は、原則として早い申込順を優先します。<br>
     変更・キャンセルはInstagram / お電話にてご連絡ください。<br>
     つわの寮について詳しくは <a href="https://tsuwano-ryo.com/" target="_blank" rel="noopener" style="color:var(--moss);text-decoration:underline;text-underline-offset:2px;">tsuwano-ryo.com</a> をご覧ください。
   </div>
-
-  <div id="resList"></div>
 </div>
 
 <!-- Footer -->
@@ -855,7 +856,7 @@ function renderList() {
     return;
   }
 
-  // ── 月全体：アコーディオンリスト（デフォルト） ──
+  // ── 月全体：フラット全展開リスト ──
   let rows = S.data.filter(r => r.space === S.tab);
   if (!S.isAdm) rows = rows.filter(r => r.date >= todayS);
   rows.sort((a,b) => a.date.localeCompare(b.date) || a.start.localeCompare(b.start));
@@ -869,54 +870,36 @@ function renderList() {
     return;
   }
 
-  let openIdx = 'all';
-  function buildList() {
-    let h = '<div class="rl">';
-    rows.forEach((r, i) => {
-      const [,mo,d] = r.date.split('-');
-      const dow = DAYS[new Date(r.date+'T00:00:00').getDay()];
-      const isToday = r.date === todayS;
-      const dateLabel = `${parseInt(mo)}/${parseInt(d)}（${dow}）`;
-      const title = r.title || '個人利用';
-      const isNoTitle = !r.title;
-      const planLabel = PLAN_LABEL[r.plan] || r.plan || '';
-      const isOpen = r.open && (r.open.includes('参加可能') || r.open.includes('見学可能'));
-      const isExp = openIdx === 'all' || openIdx === i;
-      h += `<div class="ri" onclick="toggleItem(${i})">
-        <div class="ri-row" style="display:flex;align-items:center;gap:8px;padding:9px 10px 9px 0;">
-          <div class="ri-bar ${r.space==='living'?'l':'m'}"></div>
-          <div class="ri-date${isToday?' is-today':''}">${dateLabel}</div>
-          <div class="ri-body">
-            <div class="ri-title${isNoTitle?' e':''}">${esc(title)}</div>
-            <div class="ri-time">${esc(r.start)} 〜 ${esc(r.end)}</div>
-          </div>
-          <div class="ri-arr${isExp?' open':''}">›</div>
+  let h = '<div class="rl">';
+  rows.forEach(r => {
+    const [,mo,d] = r.date.split('-');
+    const dow = DAYS[new Date(r.date+'T00:00:00').getDay()];
+    const isToday = r.date === todayS;
+    const dateLabel = `${parseInt(mo)}/${parseInt(d)}（${dow}）`;
+    const title = r.title || '個人利用';
+    const isNoTitle = !r.title;
+    const planLabel = PLAN_LABEL[r.plan] || r.plan || '';
+    const isOpen = r.open && (r.open.includes('参加可能') || r.open.includes('見学可能'));
+    h += `<div style="display:flex;align-items:stretch;border-bottom:1px solid var(--cream-d);">
+      <div style="width:3px;flex-shrink:0;background:${r.space==='living'?'var(--moss)':'var(--plum)'};"></div>
+      <div style="flex:1;padding:10px 12px;">
+        <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:5px;">
+          <div style="font-size:.71rem;font-weight:500;color:${isToday?'var(--terra)':'var(--ink-m)'};white-space:nowrap;">${dateLabel}</div>
+          <div style="font-size:.84rem;font-weight:500;color:var(--ink);${isNoTitle?'font-style:italic;color:var(--ink-l)':''};">${esc(title)}</div>
         </div>
-        <div class="ri-detail${isExp?' open':''}">
-          <div class="ri-detail-inner">
-            <div class="rbadges" style="margin-bottom:6px;">
-              <span class="b ${r.space==='living'?'sl':'sm'}">${r.space==='living'?'食堂':'会議室'}</span>
-              ${planLabel ? `<span class="b tp">${esc(planLabel)}</span>` : ''}
-              ${isOpen ? '<span class="b op">🎉 参加OK</span>' : ''}
-            </div>
-            ${r.pax ? `<div class="ri-det-row">👥 ${esc(r.pax)}人（目安）</div>` : ''}
-            ${r.appliedAt ? `<div class="ri-det-row">📋 申込 ${esc(r.appliedAt)}</div>` : ''}
-          </div>
+        <div style="font-size:.71rem;color:var(--ink-m);margin-bottom:6px;">⏱ ${esc(r.start)} 〜 ${esc(r.end)}</div>
+        <div class="rbadges">
+          <span class="b ${r.space==='living'?'sl':'sm'}">${r.space==='living'?'食堂':'会議室'}</span>
+          ${planLabel ? `<span class="b tp">${esc(planLabel)}</span>` : ''}
+          ${isOpen ? '<span class="b op">🎉 参加OK</span>' : ''}
         </div>
-      </div>`;
-    });
-    h += '</div>';
-    el.innerHTML = h;
-    window.toggleItem = function(i) {
-      if (openIdx === 'all') {
-        openIdx = -1;
-      } else {
-        openIdx = openIdx === i ? -1 : i;
-      }
-      buildList();
-    };
-  }
-  buildList();
+        ${r.pax ? `<div style="font-size:.71rem;color:var(--ink-m);margin-top:4px;">👥 ${esc(r.pax)}人（目安）</div>` : ''}
+        ${r.appliedAt ? `<div style="font-size:.62rem;color:var(--ink-l);margin-top:3px;">📋 申込 ${esc(r.appliedAt)}</div>` : ''}
+      </div>
+    </div>`;
+  });
+  h += '</div>';
+  el.innerHTML = h;
 }
 
 /* ═══════════════════════════════════════════
