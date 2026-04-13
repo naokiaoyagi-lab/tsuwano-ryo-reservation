@@ -658,7 +658,8 @@ const COL_MAP = {
   '他の方の参加・見学': 'open',
   'スペース': 'space',
   '申込日時': 'appliedAt',
-  '備考': 'memo'
+  '備考': 'memo',
+  '氏名': 'name'
 };
 
 function parseCSV(text) {
@@ -894,7 +895,8 @@ function renderDayDetail() {
         ${isOpen ? '<span class="b op">🎉 参加OK</span>' : ''}
       </div>
       ${r.pax ? `<div class="rpax">👥 ${esc(r.pax)}人（目安）</div>` : ''}
-      ${r.appliedAt ? `<div style="font-size:.62rem;color:var(--ink-l);margin-top:4px;">📋 申込 ${esc(r.appliedAt)}</div>` : ''}
+      ${r.name ? `<div style="font-size:.75rem;color:var(--ink-m);margin-top:4px;">👤 ${esc(r.name)}</div>` : ''}
+      ${r.appliedAt ? `<div style="font-size:.62rem;color:var(--ink-l);margin-top:3px;">📋 申込 ${esc(r.appliedAt)}</div>` : ''}
       ${r.memo ? `<div style="font-size:.75rem;color:var(--ink-m);margin-top:6px;background:var(--cream);border-radius:5px;padding:5px 8px;line-height:1.6;">💬 ${esc(r.memo)}</div>` : ''}
     </div>`;
   });
@@ -948,6 +950,7 @@ function renderAllList() {
           ${isOpen ? '<span class="b op">🎉 参加OK</span>' : ''}
         </div>
         ${r.pax ? `<div style="font-size:.71rem;color:var(--ink-m);margin-top:4px;">👥 ${esc(r.pax)}人（目安）</div>` : ''}
+        ${r.name ? `<div style="font-size:.71rem;color:var(--ink-m);margin-top:3px;">👤 ${esc(r.name)}</div>` : ''}
         ${r.appliedAt ? `<div style="font-size:.62rem;color:var(--ink-l);margin-top:3px;">📋 申込 ${esc(r.appliedAt)}</div>` : ''}
         ${r.memo ? `<div style="font-size:.73rem;color:var(--ink-m);margin-top:5px;background:var(--cream);border-radius:5px;padding:5px 8px;line-height:1.6;">💬 ${esc(r.memo)}</div>` : ''}
       </div>
