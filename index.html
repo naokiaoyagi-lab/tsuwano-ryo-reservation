@@ -117,8 +117,8 @@ a{color:inherit;text-decoration:none;}
 .dow:last-child{color:var(--plum-m);}
 .cc{
   aspect-ratio:1;display:flex;flex-direction:column;
-  align-items:center;justify-content:flex-start;
-  padding-top:3px;border-radius:5px;cursor:pointer;min-height:34px;
+  align-items:center;justify-content:center;
+  border-radius:5px;cursor:pointer;min-height:34px;
   transition:background .1s;
 }
 .cc.empty{cursor:default;}
@@ -259,6 +259,10 @@ a{color:inherit;text-decoration:none;}
   background:var(--white);border-top:1px solid var(--cream-d);
   padding:7px 12px env(safe-area-inset-bottom,0px);
   box-shadow:0 -2px 10px rgba(26,23,20,.06);
+}
+@media(min-width:640px){
+  .footer{padding:12px 24px;}
+  body{padding-bottom:90px;}
 }
 .foot-in{
   max-width:680px;margin:0 auto;
@@ -434,6 +438,8 @@ a{color:inherit;text-decoration:none;}
     </div>
   </div>
 
+  <div id="dayDetail"></div>
+
   <div class="adm-bar" id="admBar" style="display:none">
     <span class="adm-bar-label">🔐 管理者モード</span>
     <div style="display:flex;gap:6px;flex-wrap:wrap;">
@@ -528,9 +534,6 @@ a{color:inherit;text-decoration:none;}
     <div class="mb">
       <ul style="list-style:none;padding:0;margin:0;">
         <li style="padding:11px 0;border-bottom:1px solid var(--cream-d);font-size:.82rem;color:var(--ink);line-height:1.6;display:flex;gap:8px;">
-          <span style="color:var(--gold);flex-shrink:0;">•</span>町民・学生の方は身分証・学生証をご提示ください
-        </li>
-        <li style="padding:11px 0;border-bottom:1px solid var(--cream-d);font-size:.82rem;color:var(--ink);line-height:1.6;display:flex;gap:8px;">
           <span style="color:var(--gold);flex-shrink:0;">•</span>お支払いは当日・現地にてお願いします
         </li>
         <li style="padding:11px 0;border-bottom:1px solid var(--cream-d);font-size:.82rem;color:var(--ink);line-height:1.6;display:flex;gap:8px;">
@@ -542,8 +545,11 @@ a{color:inherit;text-decoration:none;}
         <li style="padding:11px 0;border-bottom:1px solid var(--cream-d);font-size:.82rem;color:var(--ink);line-height:1.6;display:flex;gap:8px;">
           <span style="color:var(--gold);flex-shrink:0;">•</span>混雑時は宿泊者の利用が優先されます
         </li>
+        <li style="padding:11px 0;border-bottom:1px solid var(--cream-d);font-size:.82rem;color:var(--ink);line-height:1.6;display:flex;gap:8px;">
+          <span style="color:var(--gold);flex-shrink:0;">•</span>ご利用後は現状復帰をお願いします
+        </li>
         <li style="padding:11px 0;font-size:.82rem;color:var(--ink);line-height:1.6;display:flex;gap:8px;">
-          <span style="color:var(--gold);flex-shrink:0;">•</span>厨房は当面の間、宿泊者専用です
+          <span style="color:var(--gold);flex-shrink:0;">•</span>厨房は宿泊者専用です。ご利用希望の場合はご相談ください
         </li>
       </ul>
       <div style="height:14px"></div>
@@ -651,7 +657,8 @@ const COL_MAP = {
   '想定利用人数（定員16名）': 'pax',
   '他の方の参加・見学': 'open',
   'スペース': 'space',
-  '申込日時': 'appliedAt'
+  '申込日時': 'appliedAt',
+  '備考': 'memo'
 };
 
 function parseCSV(text) {
@@ -852,42 +859,55 @@ const PLAN_LABEL = {
 };
 
 function renderList() {
-  const el = document.getElementById('resList');
+  renderDayDetail();
+  renderAllList();
+}
 
-  // ── 日付フィルター中：詳細カード ──
-  if (S.fd) {
-    let rows = S.data.filter(r => r.space === S.tab && r.date === S.fd);
-    rows.sort((a,b) => a.start.localeCompare(b.start));
-    if (!rows.length) {
-      el.innerHTML = `<div class="empty-st"><div class="ico">📭</div><p>この日の予約はありません</p></div>`;
-      return;
-    }
-    const [,mo,d] = S.fd.split('-');
-    const dow = DAYS[new Date(S.fd+'T00:00:00').getDay()];
-    let h = `<div class="dg"><div class="dg-hdr">${parseInt(mo)}月${parseInt(d)}日（${dow}）の予約</div>`;
-    rows.forEach(r => {
-      const planLabel = PLAN_LABEL[r.plan] || r.plan || '';
-      const isOpen = r.open && (r.open.includes('参加可能') || r.open.includes('見学可能'));
-      h += `<div class="rc ${r.space==='living'?'l':'m'}">
-        <div class="rt${r.title?'':' e'}">${r.title ? esc(r.title) : '（個人利用）'}</div>
-        <div class="rtime">⏱ ${esc(r.start)} 〜 ${esc(r.end)}</div>
-        <div class="rbadges">
-          <span class="b ${r.space==='living'?'sl':'sm'}">${r.space==='living'?'食堂':'会議室'}</span>
-          ${planLabel ? `<span class="b tp">${esc(planLabel)}</span>` : ''}
-          ${isOpen ? '<span class="b op">🎉 参加OK</span>' : ''}
-        </div>
-        ${r.pax ? `<div class="rpax">👥 ${esc(r.pax)}人（目安）</div>` : ''}
-        ${r.appliedAt ? `<div style="font-size:.62rem;color:var(--ink-l);margin-top:4px;">📋 申込 ${esc(r.appliedAt)}</div>` : ''}
-      </div>`;
-    });
-    h += '</div>';
-    el.innerHTML = h;
+// ── 日付クリック時の詳細（フィルターバッジ直下） ──
+function renderDayDetail() {
+  const el = document.getElementById('dayDetail');
+  if (!S.fd) { el.innerHTML = ''; return; }
+
+  let rows = S.data.filter(r => r.space === S.tab && r.date === S.fd);
+  rows.sort((a,b) => a.start.localeCompare(b.start));
+
+  const [,mo,d] = S.fd.split('-');
+  const dow = DAYS[new Date(S.fd+'T00:00:00').getDay()];
+
+  if (!rows.length) {
+    el.innerHTML = `<div class="empty-st" style="padding:20px 16px;">
+      <div class="ico">📭</div><p>この日の予約はありません</p>
+    </div>`;
     return;
   }
 
-  // ── 月全体：フラット全展開リスト ──
+  let h = `<div class="dg"><div class="dg-hdr">${parseInt(mo)}月${parseInt(d)}日（${dow}）の予約</div>`;
+  rows.forEach(r => {
+    const planLabel = PLAN_LABEL[r.plan] || r.plan || '';
+    const isOpen = r.open && (r.open.includes('参加可能') || r.open.includes('見学可能'));
+    h += `<div class="rc ${r.space==='living'?'l':'m'}">
+      <div class="rt${r.title?'':' e'}">${r.title ? esc(r.title) : '（個人利用）'}</div>
+      <div class="rtime">⏱ ${esc(r.start)} 〜 ${esc(r.end)}</div>
+      <div class="rbadges">
+        <span class="b ${r.space==='living'?'sl':'sm'}">${r.space==='living'?'食堂':'会議室'}</span>
+        ${planLabel ? `<span class="b tp">${esc(planLabel)}</span>` : ''}
+        ${isOpen ? '<span class="b op">🎉 参加OK</span>' : ''}
+      </div>
+      ${r.pax ? `<div class="rpax">👥 ${esc(r.pax)}人（目安）</div>` : ''}
+      ${r.appliedAt ? `<div style="font-size:.62rem;color:var(--ink-l);margin-top:4px;">📋 申込 ${esc(r.appliedAt)}</div>` : ''}
+      ${r.memo ? `<div style="font-size:.75rem;color:var(--ink-m);margin-top:6px;background:var(--cream);border-radius:5px;padding:5px 8px;line-height:1.6;">💬 ${esc(r.memo)}</div>` : ''}
+    </div>`;
+  });
+  h += '</div>';
+  el.innerHTML = h;
+}
+
+// ── 今後の予約一覧（常時表示） ──
+function renderAllList() {
+  const el = document.getElementById('resList');
   let rows = S.data.filter(r => r.space === S.tab);
-  if (!S.isAdm) rows = rows.filter(r => r.date >= todayS);
+  const thirtyDaysLater = fmtDate(new Date(Date.now() + 30 * 86400000));
+  if (!S.isAdm) rows = rows.filter(r => r.date >= todayS && r.date <= thirtyDaysLater);
   rows.sort((a,b) => a.date.localeCompare(b.date) || a.start.localeCompare(b.start));
 
   if (!rows.length) {
@@ -900,24 +920,18 @@ function renderList() {
   }
 
   const tomorrowS = fmtDate(new Date(Date.now() + 86400000));
-
   let h = '<div class="rl">';
   rows.forEach(r => {
     const [,mo,d] = r.date.split('-');
     const dow = DAYS[new Date(r.date+'T00:00:00').getDay()];
     const isToday = r.date === todayS;
-    const isTomorrow = r.date === tomorrowS;
     const dateLabel = `${parseInt(mo)}/${parseInt(d)}（${dow}）`;
     const title = r.title || '個人利用';
     const isNoTitle = !r.title;
     const planLabel = PLAN_LABEL[r.plan] || r.plan || '';
     const isOpen = r.open && (r.open.includes('参加可能') || r.open.includes('見学可能'));
-
-    // 今日ハイライトのみ
     const hlBg = isToday ? 'background:var(--terra-l);' : '';
-    const hlTag = isToday
-      ? `<span style="font-size:.58rem;font-weight:500;background:var(--terra);color:#fff;border-radius:4px;padding:1px 5px;margin-left:5px;">今日</span>`
-      : '';
+    const hlTag = isToday ? `<span style="font-size:.58rem;font-weight:500;background:var(--terra);color:#fff;border-radius:4px;padding:1px 5px;margin-left:5px;">今日</span>` : '';
     const dateColor = isToday ? 'var(--terra)' : 'var(--ink-m)';
 
     h += `<div style="display:flex;align-items:stretch;border-bottom:1px solid var(--cream-d);${hlBg}">
@@ -935,6 +949,7 @@ function renderList() {
         </div>
         ${r.pax ? `<div style="font-size:.71rem;color:var(--ink-m);margin-top:4px;">👥 ${esc(r.pax)}人（目安）</div>` : ''}
         ${r.appliedAt ? `<div style="font-size:.62rem;color:var(--ink-l);margin-top:3px;">📋 申込 ${esc(r.appliedAt)}</div>` : ''}
+        ${r.memo ? `<div style="font-size:.73rem;color:var(--ink-m);margin-top:5px;background:var(--cream);border-radius:5px;padding:5px 8px;line-height:1.6;">💬 ${esc(r.memo)}</div>` : ''}
       </div>
     </div>`;
   });
